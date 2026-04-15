@@ -1,0 +1,768 @@
+🏏  IPL AUCTION MANAGEMENT SYSTEM
+Project Requirements Document (PRD)
+
+
+Document Version
+v1.0
+Project Type
+College Event Web Application
+Prepared For
+Vasavi College of Engineering
+Date
+April 2026
+Stack
+React + Node.js + Socket.io + Firebase
+Status
+DRAFT — Pending Review
+
+
+CONFIDENTIAL — INTERNAL USE ONLY
+
+1. Project Overview
+The IPL Auction Management System is a real-time, web-based platform designed to digitize and streamline the management of mock IPL (Indian Premier League) player auctions for college events. The system provides a controlled, two-role environment: an Admin who manages the auction in real time, and a Viewer (audience or participant) who follows live updates on a read-only scoreboard.
+
+1.1  Problem Statement
+Manual IPL auction events at colleges suffer from transparency issues, calculation errors, slow purse tracking, and an inability to show live updates to large audiences. This system eliminates those gaps with a structured digital platform.
+
+1.2  Objectives
+Provide a secure admin interface to manage team purses in real time.
+Provide a public viewer board showing live purse standings.
+Broadcast all auction events instantly via WebSockets.
+Prevent invalid transactions with robust input validation.
+Deliver an IPL-themed, visually engaging UI suitable for projector display.
+
+1.3  Scope
+IN SCOPE
+OUT OF SCOPE
+Admin login & session management
+Player profile management
+Team purse deduction & reset
+Live video/audio streaming
+Real-time viewer scoreboard
+Payment integrations
+WebSocket broadcast layer
+Mobile native apps (iOS/Android)
+Input validation & error handling
+Bidding history analytics dashboard
+Responsive UI for projector & mobile
+Multi-auction concurrent sessions
+
+2. Stakeholders & User Roles
+2.1  Role Matrix
+Role
+Description
+Access Level
+Auth Required
+Admin
+Auction controller / event organizer
+Full CRUD on purses
+Yes (Login)
+Viewer
+Audience, participants, players
+Read-only scoreboard
+No
+
+2.2  Admin — Detailed Capabilities
+Authenticate via username/password with JWT-protected session.
+View dashboard: all teams listed with live remaining purse values.
+Select any team from a dropdown or card-based UI.
+Enter an auction bid amount and submit a deduction.
+Receive immediate validation feedback (insufficient balance, invalid input).
+Reset purse of a single team or all teams to their starting values.
+Log out securely, invalidating the session token.
+
+2.3  Viewer — Detailed Capabilities
+Access the viewer board via a public URL — no login required.
+See all IPL teams listed in scoreboard/leaderboard layout.
+View each team's remaining purse, updated in real time via WebSocket.
+Experience an IPL-themed, high-contrast UI optimized for projection screens.
+
+3. Functional Requirements
+3.1  Authentication Module (Admin)
+REQ ID
+Feature
+Description
+Acceptance Criteria
+FR-01
+Admin Login
+Username + password form with submit button.
+Login with correct credentials succeeds; incorrect fails with error.
+FR-02
+JWT Token
+Server issues JWT on successful login; stored in httpOnly cookie or localStorage.
+Protected routes reject requests without valid token.
+FR-03
+Logout
+Admin can log out at any time from the dashboard.
+Session/token cleared; redirect to login page.
+FR-04
+Route Guard
+All admin API routes (/deduct, /reset) require valid JWT.
+API returns 401 for unauthenticated calls.
+
+3.2  Admin Dashboard Module
+REQ ID
+Feature
+Description
+Acceptance Criteria
+FR-05
+Team Overview
+Dashboard lists all teams with current purse value.
+All teams rendered on load; purse values match DB.
+FR-06
+Team Selector
+Dropdown or card click to select active team for deduction.
+Selected team highlighted; name reflected in deduction form.
+FR-07
+Deduction Form
+Input field for bid amount + Deduct button.
+Numeric-only input; button disabled until team + amount selected.
+FR-08
+Purse Update
+On deduct, team purse reduces immediately in UI and DB.
+Purse decremented correctly; change persisted in DB.
+FR-09
+Reset Controls
+Buttons to reset individual or all teams to starting purse.
+Confirmation dialog before reset; purse restored to initial value.
+
+3.3  Validation & Error Handling
+REQ ID
+Feature
+Description
+Acceptance Criteria
+FR-10
+Insufficient Balance
+Block deduction if amount > available purse.
+Error: 'Insufficient balance. Max available: ₹X'
+FR-11
+Non-positive Input
+Block zero or negative bid amounts.
+Error: 'Amount must be greater than 0'
+FR-12
+Non-numeric Input
+Block non-numeric or empty entries.
+Input field accepts numbers only; form won't submit otherwise.
+FR-13
+No Team Selected
+Block deduction if no team is selected.
+Deduct button remains disabled; tooltip: 'Select a team first'
+FR-14
+Server Error
+Graceful UI message if API fails.
+Toast notification: 'Server error. Please retry.'
+
+3.4  Viewer Board Module
+REQ ID
+Feature
+Description
+Acceptance Criteria
+FR-15
+Live Scoreboard
+Display all teams and purse values in a grid/leaderboard.
+All teams visible on load without login.
+FR-16
+Real-Time Update
+Purse values update instantly when admin makes a deduction.
+Update reflected within 500ms via WebSocket.
+FR-17
+Update Animation
+Highlight or animate the changed team row on update.
+Row flashes or animates for 2 seconds after update.
+FR-18
+Projector Mode
+Large-font, high-contrast layout for projection.
+Purse values legible at 5+ metres on standard projector.
+
+4. Non-Functional Requirements
+4.1  Performance
+WebSocket event delivery latency: < 500 ms under normal network conditions.
+Page initial load time: < 2 seconds on a standard college Wi-Fi network.
+API response time for /deduct: < 300 ms (excluding network latency).
+System must handle at least 100 concurrent viewer WebSocket connections.
+
+4.2  Reliability & Availability
+Uptime target: 99% during the event window (typically 3–6 hours).
+Firebase/Firestore provides automatic data persistence; no data loss on page refresh.
+Graceful reconnection: WebSocket clients auto-reconnect within 3 seconds on drop.
+
+4.3  Security
+Admin login endpoint rate-limited to 5 attempts per minute per IP.
+JWT tokens expire after 8 hours; refresh not required for event duration.
+HTTPS enforced in production deployment.
+All input sanitized on the server before DB writes (prevent injection).
+Environment variables used for all secrets (JWT_SECRET, DB credentials).
+
+4.4  Usability
+UI must be operable by a non-technical event volunteer after 5-minute briefing.
+Error messages must be human-readable and actionable.
+Viewer board must be self-explanatory with no documentation required.
+
+4.5  Responsiveness
+Admin panel: optimized for laptop/desktop (1280px+ width).
+Viewer board: responsive grid from 360px (mobile) to 1920px (projector/TV).
+
+5. System Architecture
+5.1  High-Level Architecture
+The system follows a three-tier architecture: React frontend, Node.js/Express backend, and Firebase Realtime Database. Socket.io overlays the HTTP server to maintain a persistent duplex channel for real-time event broadcasting.
+
+Layer
+Technology
+Responsibility
+Presentation
+React.js + Tailwind / CSS Modules
+Admin Panel UI, Viewer Board UI
+API Server
+Node.js + Express.js
+REST endpoints, JWT auth, Socket.io server
+Real-Time Layer
+Socket.io (WebSockets)
+Broadcast purse_update events to all viewers
+Database
+Firebase Realtime Database
+Persistent storage of teams and purse values
+Auth
+JWT (jsonwebtoken npm)
+Stateless admin session management
+
+5.2  Data Flow — Deduction Event
+Admin enters bid amount and clicks Deduct.
+React frontend POSTs to /api/deduct with JWT in Authorization header.
+Express middleware validates JWT; rejects 401 if invalid.
+Controller validates: amount > 0, amount <= current purse, team exists.
+On success: Firebase updates team purse; server emits purse_update via Socket.io.
+All connected viewer clients receive the event and re-render purse value.
+Admin UI updates immediately (optimistic or on confirmation).
+
+6. API Specification
+6.1  REST Endpoints
+Endpoint
+Method
+Description
+Auth
+Response
+/api/login
+POST
+Admin authentication
+None
+200: { token } / 401: Unauthorized
+/api/teams
+GET
+Fetch all teams with current purse
+None (public)
+200: [ { id, name, purse, startPurse } ]
+/api/deduct
+POST
+Deduct bid amount from team purse
+JWT Required
+200: { team, newPurse } / 400: Validation error
+/api/reset
+POST
+Reset team(s) purse to starting value
+JWT Required
+200: { success, teams }
+/api/health
+GET
+Server health check
+None
+200: { status: 'ok' }
+
+6.2  Request & Response Schemas
+POST /api/login
+Request Body:
+{ "username": "admin", "password": "securePass123" }
+Success Response:
+{ "token": "<JWT>", "expiresIn": "8h" }
+
+POST /api/deduct
+Request Body:
+{ "teamId": "csk", "amount": 500000 }
+Success Response:
+{ "teamId": "csk", "teamName": "CSK", "previousPurse": 5000000, "newPurse": 4500000 }
+Error Response (400):
+{ "error": "Insufficient balance", "available": 4500000 }
+
+6.3  WebSocket Events
+Event Name
+Direction
+Trigger
+Payload
+purse_update
+Server → Clients
+Successful deduction
+{ teamId, teamName, newPurse }
+purse_reset
+Server → Clients
+Admin resets purse(s)
+{ teams: [ { id, name, purse } ] }
+connect
+Client → Server
+Client connects
+None
+disconnect
+Client → Server
+Client disconnects
+None
+
+7. Database Design
+7.1  Firebase Realtime Database Schema
+Root structure:
+
+Field
+Type
+Example Value
+Description
+teams/{teamId}/id
+String
+"csk"
+Unique team identifier (slug)
+teams/{teamId}/name
+String
+"Chennai Super Kings"
+Full team display name
+teams/{teamId}/shortName
+String
+"CSK"
+Abbreviation for scoreboard
+teams/{teamId}/purse
+Number
+5000000
+Current remaining purse (INR)
+teams/{teamId}/startPurse
+Number
+9000000
+Starting purse value for reset
+teams/{teamId}/color
+String
+"#FFFF00"
+Team primary color for UI theming
+teams/{teamId}/logoUrl
+String
+"https://..."
+URL to team logo image (optional)
+
+7.2  Initial Seed Data — IPL Teams
+Short
+Full Name
+Start Purse (₹)
+Color
+CSK
+Chennai Super Kings
+9,00,00,000
+#FFFF00
+MI
+Mumbai Indians
+9,00,00,000
+#004BA0
+RCB
+Royal Challengers Bengaluru
+9,00,00,000
+#EC1C24
+KKR
+Kolkata Knight Riders
+9,00,00,000
+#3A225D
+DC
+Delhi Capitals
+9,00,00,000
+#0078BC
+SRH
+Sunrisers Hyderabad
+9,00,00,000
+#F7A721
+PBKS
+Punjab Kings
+9,00,00,000
+#ED1B24
+RR
+Rajasthan Royals
+9,00,00,000
+#E73895
+LSG
+Lucknow Super Giants
+9,00,00,000
+#A0CAEC
+GT
+Gujarat Titans
+9,00,00,000
+#1C1C5E
+
+8. UI/UX Design Specifications
+8.1  Design Language
+Theme: IPL / cricket stadium — dark navy base with gold accents.
+Typography: Bold, high-contrast sans-serif fonts (Inter, Poppins, or Rajdhani).
+Color Palette: Navy (#0D1B3E), Gold (#D4A017), White (#FFFFFF), Alert Red (#E53E3E).
+Purse values displayed in large font (min 2.5rem on desktop, 4rem on projector mode).
+Team logos displayed as circular avatars where available.
+
+8.2  Admin Panel — Page Breakdown
+Page / Section
+Key Components
+Behaviour
+Login Page
+Username field, Password field, Login button, Logo
+On success → redirect to dashboard; on fail → inline error
+Dashboard Header
+App title, Admin badge, Logout button
+Persistent across all admin views
+Team Cards Grid
+Card per team: logo, name, remaining purse, % bar
+Cards update live via Socket.io
+Deduction Panel
+Team dropdown, Amount input, Deduct button, Error label
+Validates in real time before submit
+Reset Modal
+Confirm dialog: reset selected / reset all
+Two-step confirmation to avoid accidental resets
+
+8.3  Viewer Board — Page Breakdown
+Section
+Key Components
+Behaviour
+Header Banner
+IPL logo area, Event title, Live indicator dot
+Pulsing green dot when WebSocket connected
+Scoreboard Grid
+Team logo, name, purse value (large), rank badge
+Sorted by remaining purse descending
+Update Flash
+Row highlight animation on purse change
+Gold flash for 1.5s on the updated team row
+Footer
+Event name, Powered by note
+Static
+
+8.4  Optional Enhancements (Nice-to-Have)
+Auction countdown timer displayed on both admin and viewer panels.
+Sold animation overlay: team card flips/glows when a deduction is made.
+Purse bar chart showing remaining budget as a visual percentage bar.
+Dark mode toggle for extended viewing comfort.
+QR code on the admin screen for audience to open the viewer URL on mobile.
+
+9. Technology Stack & Dependencies
+9.1  Frontend
+Package
+Version
+Purpose
+react
+^18.x
+UI component framework
+react-router-dom
+^6.x
+Client-side routing (admin vs viewer)
+socket.io-client
+^4.x
+WebSocket client for live updates
+axios
+^1.x
+HTTP client for REST API calls
+tailwindcss
+^3.x
+Utility-first CSS framework
+framer-motion
+^10.x
+Animations (update flash, transitions)
+
+9.2  Backend
+Package
+Version
+Purpose
+express
+^4.x
+HTTP server and REST routing
+socket.io
+^4.x
+WebSocket server, event broadcasting
+firebase-admin
+^11.x
+Server-side Firebase DB access
+jsonwebtoken
+^9.x
+JWT generation and verification
+bcryptjs
+^2.x
+Admin password hashing
+express-rate-limit
+^6.x
+Login endpoint rate limiting
+cors
+^2.x
+Cross-origin request handling
+dotenv
+^16.x
+Environment variable management
+helmet
+^7.x
+HTTP security headers
+
+9.3  Infrastructure & Tooling
+Tool
+Role
+Firebase Realtime DB
+Primary datastore — free tier sufficient for event use
+Vite
+React build tool (fast HMR for development)
+Render / Railway
+Backend deployment (free/hobby tier)
+Vercel / Netlify
+Frontend deployment (static CDN)
+GitHub
+Version control and CI/CD pipeline
+Postman
+API testing during development
+
+10. Project Folder Structure
+10.1  Monorepo Layout
+Recommended structure using a single GitHub repository with /client and /server directories:
+
+Path
+Contents
+ipl-auction/
+Root monorepo
+  client/
+React frontend application
+  client/src/pages/
+AdminLogin, AdminDashboard, ViewerBoard
+  client/src/components/
+TeamCard, DeductPanel, Scoreboard, etc.
+  client/src/hooks/
+useSocket, useTeams, useAuth custom hooks
+  client/src/services/
+api.js (axios instance), socket.js
+  server/
+Node.js Express backend
+  server/src/routes/
+auth.js, teams.js, deduct.js, reset.js
+  server/src/middleware/
+authMiddleware.js, validateInput.js
+  server/src/services/
+firebaseService.js, socketService.js
+  server/src/config/
+firebase.js, jwt.js
+  .env (server)
+JWT_SECRET, FIREBASE_URL, ADMIN_PASS_HASH
+  README.md
+Setup and deployment instructions
+
+11. Development Milestones & Timeline
+Phase
+Milestone
+Deliverables
+Est. Duration
+1
+Project Setup
+Repo init, folder structure, env config, Firebase project created
+0.5 day
+2
+Backend Core
+Express server, /login, /teams, /deduct, /reset endpoints with JWT
+1.5 days
+3
+Firebase Integration
+Firebase Admin SDK connected; team seed data loaded; deduct writes working
+0.5 day
+4
+Socket.io Layer
+Server emits purse_update on deduct; clients receive and log events
+0.5 day
+5
+Admin UI
+Login page, dashboard with team cards, deduction form, reset controls
+2 days
+6
+Viewer Board UI
+Scoreboard grid, WebSocket listener, update animation, responsive layout
+1.5 days
+7
+Validation & Error UX
+Client + server validation, error messages, edge case handling
+0.5 day
+8
+Styling & Polish
+IPL theme, animations, projector mode, mobile responsiveness
+1 day
+9
+Testing
+Manual end-to-end testing, multi-browser testing, load test viewer board
+1 day
+10
+Deployment
+Frontend → Vercel, Backend → Render; env vars configured; smoke test
+0.5 day
+
+Total Estimated Development Time: 10 days (1 developer, part-time) / 5 days (2 developers, full-time)
+
+12. Testing Plan
+12.1  Test Cases — Admin Authentication
+TC
+Test Case
+Input
+Expected Result
+TC-01
+Valid login
+Correct username + password
+JWT returned; redirect to dashboard
+TC-02
+Invalid password
+Correct username, wrong password
+401 error; 'Invalid credentials' message
+TC-03
+Empty fields
+Blank submission
+Form validation prevents submit
+TC-04
+Expired token
+Old JWT on protected route
+401 returned; redirect to login
+
+12.2  Test Cases — Purse Deduction
+TC
+Test Case
+Input
+Expected Result
+TC-05
+Valid deduction
+Team: CSK, Amount: 500000
+Purse decremented; viewer board updates
+TC-06
+Insufficient balance
+Amount > current purse
+'Insufficient balance' error shown
+TC-07
+Zero amount
+Amount = 0
+'Amount must be > 0' error shown
+TC-08
+No team selected
+No team + valid amount
+Deduct button disabled / error shown
+TC-09
+Exact balance
+Amount = current purse exactly
+Purse set to 0; success response
+
+12.3  Test Cases — Real-Time Sync
+TC
+Test Case
+Setup
+Expected Result
+TC-10
+Single viewer update
+1 viewer open, admin deducts
+Viewer sees update within 1s
+TC-11
+Multiple viewers
+5 viewers open, admin deducts
+All 5 viewers update simultaneously
+TC-12
+Viewer reconnect
+Disconnect viewer, admin deducts, reconnect viewer
+Viewer shows latest state on reconnect
+TC-13
+Reset event broadcast
+Admin resets all teams
+All viewer cards reset to start purse
+
+13. Deployment & Operations
+13.1  Deployment Architecture
+Frontend (React) deployed to Vercel or Netlify — static CDN hosting, free tier.
+Backend (Node.js + Socket.io) deployed to Render or Railway — persistent Node.js instance required for WebSocket support.
+Firebase Realtime Database hosted on Google's infrastructure — no self-hosting.
+Custom domain optional; HTTPS automatically provisioned by Vercel/Render.
+
+13.2  Environment Variables
+Variable
+Where
+Description
+JWT_SECRET
+Server .env
+Secret key for JWT signing (min 32 chars)
+ADMIN_USERNAME
+Server .env
+Admin login username
+ADMIN_PASSWORD_HASH
+Server .env
+Bcrypt hash of admin password
+FIREBASE_DATABASE_URL
+Server .env
+Firebase project DB URL
+FIREBASE_SERVICE_ACCOUNT
+Server .env
+JSON service account key (base64 encoded)
+VITE_API_URL
+Client .env
+Backend API base URL
+VITE_SOCKET_URL
+Client .env
+Socket.io server URL
+
+13.3  Pre-Event Checklist
+Seed Firebase with all 10 team records and starting purse values.
+Verify admin login works on the deployed URL.
+Open viewer board on projector browser in full-screen mode.
+Test one deduction from admin; confirm viewer board updates live.
+Ensure both admin and viewer devices are on the same Wi-Fi network (or internet).
+Keep a backup admin device (tablet/laptop) with the admin URL bookmarked.
+Test reset functionality before event starts.
+
+14. Risks & Mitigations
+#
+Risk
+Severity
+Probability
+Mitigation
+1
+Wi-Fi instability at venue causes WebSocket drops
+High
+Medium
+Socket.io auto-reconnect; offline Firebase local cache
+2
+Admin accidentally clicks Reset All mid-auction
+High
+Low
+Two-step confirm dialog with typed confirmation text
+3
+Firebase free tier read/write limits hit
+Medium
+Low
+Event data volume is very small; limits will not be reached
+4
+Backend cold start delay on Render free tier
+Medium
+Medium
+Ping the server endpoint 5 min before event start
+5
+Admin forgets password during event
+High
+Low
+Store password in sealed envelope; test login 30 min before
+6
+Negative purse bug from race condition
+High
+Low
+Server-side atomic Firebase transaction on deduct
+
+15. Glossary
+Term
+Definition
+Purse
+The remaining monetary budget allocated to a team for buying players in the auction
+Deduction
+The act of subtracting a bid amount from a team's purse after a player is sold to them
+JWT
+JSON Web Token — a compact, self-contained method for securely transmitting session information
+WebSocket
+A persistent bidirectional communication protocol enabling real-time data push from server to clients
+Socket.io
+A JavaScript library built on WebSockets with automatic fallback and reconnection support
+Firebase RTDB
+Firebase Realtime Database — a cloud-hosted NoSQL JSON database with real-time sync
+REST API
+Representational State Transfer API — HTTP-based endpoints for CRUD operations
+Admin Panel
+The password-protected interface used by the auction controller to manage purses
+Viewer Board
+The public, read-only scoreboard displayed to the audience during the auction
+
+
+End of Document  •  IPL Auction Management System PRD  •  v1.0  •  April 2026

@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary: #05070a;
+  --primary-light: #0d1117;
+  --gold: #D9B36A;
+  --gold-light: #E8CC8E;
+  --accent: #38bdf8;
+  --glass: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --success: #10b981;
+  --danger: #ef4444;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--primary);
+  background: radial-gradient(circle at 50% 0%, #111425 0%, var(--primary) 75%);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* Elite Typography */
+.font-space { font-family: 'Space Grotesk', sans-serif; }
+.font-inter { font-family: 'Inter', sans-serif; }
+.font-rajdhani { font-family: 'Space Grotesk', sans-serif; } /* Redirect for consistency */
+
+.gold-text {
+  background: linear-gradient(135deg, #E8CC8E, #D9B36A, #A6803F);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* High-Density Glassmorphism */
+.premium-glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 10px 40px -10px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.premium-glass-hover:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* Precision Metrics */
+.text-massive {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  line-height: 0.85;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.text-bid {
+  font-size: clamp(1.25rem, 3vw, 2.5rem);
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+}
+
+.label-premium {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'Inter', sans-serif;
+  text-shadow: 0 0 10px rgba(255,255,255,0.1);
+}
+
+/* Layout container */
+.layout-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Status dots & Animations */
+.live-dot {
+  animation: live-pulse 2.5s infinite ease-in-out;
+}
+
+@keyframes live-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.4); opacity: 1; filter: blur(2px); }
+}
+
+.flash-update {
+  animation: flash-animation 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes flash-animation {
+  0% { box-shadow: 0 0 0 0 rgba(217, 179, 106, 0); }
+  20% { box-shadow: 0 0 40px 10px rgba(217, 179, 106, 0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(217, 179, 106, 0); }
+}
+
+/* Liquid Progress Refined */
+.liquid-progress {
+  position: relative;
+  overflow: hidden;
+}
+
+.liquid-progress::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  animation: liquid-shimmer 3s infinite linear;
+}
+
+@keyframes liquid-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+
+/* Action Components */
+.btn-gold {
+  background: linear-gradient(135deg, #E8CC8E, #D9B36A, #A6803F);
+  color: #05070a;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.btn-gold:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 8px 30px rgba(217, 179, 106, 0.3);
+}
+
+.btn-gold:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.auth-input {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: white !important;
+  transition: all 0.3s ease;
+}
+
+.auth-input:focus {
+  border-color: var(--gold) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 0 20px rgba(217, 179, 106, 0.1);
+}
+
+/* Custom Scrollbar for Precision */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
